@@ -39,12 +39,95 @@ x <- cces %>%
 
 ## Wisdom
 
+Look at the data!
+
+```{r}
+x %>%
+  ggplot(aes(faminc, ideology)) +
+    geom_jitter(alpha = 0.05) +
+    geom_smooth(formula = y ~ x,
+                method = "lm")
+
+```
+
+
 
 ## Justice
 
+$$y_i = \beta_0  + \beta_1 x_{1,i} + \beta_2 x_{2,i} + ... + \beta_n x_{n,i} + \epsilon_i$$
 
 ## Courage
 
+$$ideology_i = \beta_0  + \beta_1 faminc_i + \epsilon_i$$
+
+```{r}
+fit_1 <- stan_glm(data = x,
+                  ideology ~ faminc,
+                  refresh = 0,
+                  seed = 9)
+
+print(fit_1, digits = 4)
+```
+
+
+
+```{r}
+fit_2 <- stan_glm(data = x,
+                  ideology ~ faminc + gender + gender*faminc,
+                  refresh = 0,
+                  seed = 9)
+
+print(fit_2, digits = 4)
+```
+
+$$ideology_i = \beta_0  + \beta_1 faminc_i + \beta_2*Male_i + \beta_3*Male_i faminc_i + \epsilon_i$$
+
+```{r}
+fit_3 <- stan_glm(data = x,
+                  ideology ~ age + race + gender + faminc + gender*faminc,
+                  refresh = 0,
+                  seed = 39)
+
+print(fit_3, digits = 3)
+```
+
+
 
 ## Temperance
+
+```{r}
+age <- 50
+race <- "White"
+gender <- c("Male", "Female")
+faminc <- c(1, 6, 12)
+
+newobs <- expand_grid(age, race, gender, faminc)
+
+```
+
+
+```{r, message = FALSE}
+library(tidybayes)
+
+z <- add_fitted_draws(newobs, fit_3) %>%
+  mutate(faminc = factor(faminc, levels = c(1, 6, 12)))
+
+```
+
+```{r}
+library(ggdist)
+z %>%
+  ggplot(aes(x = .value,
+             y = faminc,
+             fill = gender)) +
+
+  stat_slab(alpha = 0.5) +
+  labs(title = "Ideology versus Income and Gender",
+       subtitle = "Women's ideology varies much more across family incomes",
+       x = "Expected Ideology",
+       y = "Family Income Category",
+       caption = "Source: CCES")
+```
+
+
 
